@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CleanGuard AI // Dual-User Validation</title>
+    <script src="/static/js/tailwindcss.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'cyber-black': '#0a0a0a',
+                        'cyber-dark': '#0d0d0d',
+                        'neon-green': '#22c55e',
+                        'neon-cyan': '#06b6d4',
+                        'neon-red': '#ef4444',
+                        'neon-yellow': '#eab308',
+                    },
+                    fontFamily: {
+                        'orbitron': ['Orbitron', 'monospace'],
+                        'rajdhani': ['Rajdhani', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: 'Rajdhani', sans-serif; background: #0a0a0a; color: #e5e5e5; overflow: hidden; }
+        .cyber-grid { position: fixed; inset: 0; background-image: linear-gradient(rgba(34, 197, 94, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(34, 197, 94, 0.03) 1px, transparent 1px); background-size: 50px 50px; pointer-events: none; z-index: 0; }
+        .hud-panel { background: linear-gradient(135deg, rgba(13, 13, 13, 0.95), rgba(26, 26, 26, 0.9)); border: 1px solid rgba(34, 197, 94, 0.3); position: relative; }
+        .student-slot.empty { border: 2px dashed rgba(34, 197, 94, 0.3); background: rgba(34, 197, 94, 0.02); }
+        .student-slot.filled { border: 2px solid #22c55e; background: rgba(34, 197, 94, 0.1); box-shadow: 0 0 20px #22c55e40; }
+        .student-slot.waiting { border: 2px solid #eab308; background: rgba(234, 179, 8, 0.1); animation: pulse 1s infinite; }
+        .camera-container { position: relative; background: #000; border: 3px solid #22c55e; box-shadow: 0 0 30px #22c55e40, inset 0 0 30px rgba(34, 197, 94, 0.1); }
+        .rfid-input { background: rgba(0,0,0,0.8); border: 2px solid #22c55e; color: #22c55e; font-family: 'Orbitron'; }
+        .rfid-input:focus { box-shadow: 0 0 20px #22c55e40; outline: none; }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; animation: pulse 1.5s infinite; }
+        .status-dot.online { background: #22c55e; box-shadow: 0 0 10px #22c55e; }
+        .status-dot.waiting { background: #eab308; box-shadow: 0 0 10px #eab308; }
+        .status-dot.offline { background: #6b7280; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .success-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 100; display: flex; align-items: center; justify-content: center; }
+    </style>
+</head>
+
+<body class="h-screen w-full">
+    <div class="cyber-grid"></div>
+    <div id="app" class="relative z-10 h-full flex flex-col">
+        <header class="h-16 bg-cyber-dark border-b border-neon-green/30 flex items-center justify-between px-6">
+            <div class="flex items-center gap-4">
+                <div>
+                    <h1 class="font-orbitron text-xl font-bold text-neon-green">CLEANGUARD AI</h1>
+                    <p class="text-xs text-gray-500 font-rajdhani">DUAL-USER VALIDATION SYSTEM v2.0</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-6">
+                <div class="flex items-center gap-2"><div class="status-dot" :class="systemStatus"></div><span class="font-orbitron text-xs text-gray-400">[[' statusText ']]</span></div>
+                <div class="font-orbitron text-lg text-neon-green">[[' currentTime ']]</div>
+            </div>
+        </header>
+
+        <main class="flex-1 flex gap-4 p-4 overflow-hidden">
+            <aside class="w-72 flex flex-col gap-4">
+                <div class="hud-panel rounded-lg p-4 flex-1 flex flex-col relative" :class="{'student-slot filled': student1, 'student-slot empty': !student1}">
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="font-orbitron text-xs text-neon-green">SISWA 01</span>
+                        <div class="flex items-center gap-2">
+                            <div class="status-dot" :class="student1 ? 'online' : 'offline'"></div>
+                            <span class="text-xs" :class="student1 ? 'text-neon-green' : 'text-gray-600'">[[' student1 ? 'VERIFIED' : 'WAITING' ']]</span>
+                        </div>
+                    </div>
+                    <div v-if="student1" class="flex-1 flex flex-col items-center justify-center">
+                        <h3 class="font-orbitron text-lg text-white mb-1">[[' student1.name ']]</h3>
+                        <span class="px-3 py-1 bg-neon-green/20 border border-neon-green/50 rounded text-xs text-neon-green mb-4">[[' student1.class ']]</span>
+                    </div>
+                    <div v-else class="flex-1 flex flex-col items-center justify-center opacity-30">
+                        <p class="font-orbitron text-xs text-center">MENUNGGU SCAN RFID</p>
+                    </div>
+                </div>
+            </aside>
+
+            <section class="flex-1 flex flex-col gap-4">
+                <div class="camera-container rounded-lg flex-1 relative overflow-hidden">
+                    <img v-if="showCamera" src="/video_feed" class="w-full h-full object-cover">
+                    <div v-else class="w-full h-full flex flex-col items-center justify-center bg-cyber-dark">
+                        <h3 class="font-orbitron text-xl text-neon-green mb-2">KAMERA STANDBY</h3>
+                    </div>
+                </div>
+                <div class="hud-panel rounded-lg p-4">
+                    <div class="flex items-center gap-4">
+                        <input type="text" v-model="rfidInput" @keydown.enter="handleScan" v-autofocus class="rfid-input w-full px-4 py-3 rounded text-center text-lg" :placeholder="inputPlaceholder" :disabled="loading || validationComplete">
+                    </div>
+                    <div v-if="message" class="mt-3 text-center text-neon-green">[[' message ']]</div>
+                </div>
+            </section>
+
+            <aside class="w-72 flex flex-col gap-4">
+                <div class="hud-panel rounded-lg p-4 flex-1 flex flex-col relative" :class="{'student-slot filled': student2, 'student-slot empty': !student2 && !student1, 'student-slot waiting': student1 && !student2}">
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="font-orbitron text-xs text-neon-green">SISWA 02</span>
+                        <div class="flex items-center gap-2">
+                            <div class="status-dot" :class="student2 ? 'online' : (student1 ? 'waiting' : 'offline')"></div>
+                            <span class="text-xs" :class="student2 ? 'text-neon-green' : (student1 ? 'text-neon-yellow' : 'text-gray-600')">[[' student2 ? 'VERIFIED' : (student1 ? 'YOUR TURN' : 'WAITING') ']]</span>
+                        </div>
+                    </div>
+                    <div v-if="student2" class="flex-1 flex flex-col items-center justify-center">
+                        <h3 class="font-orbitron text-lg text-white mb-1">[[' student2.name ']]</h3>
+                        <span class="px-3 py-1 bg-neon-green/20 border border-neon-green/50 rounded text-xs text-neon-green mb-4">[[' student2.class ']]</span>
+                    </div>
+                    <div v-else class="flex-1 flex flex-col items-center justify-center opacity-30">
+                        <p class="font-orbitron text-xs text-center" :class="student1 ? 'text-neon-yellow' : 'text-neon-green'">[[' student1 ? 'SCAN PARTNER' : 'MENUNGGU' ']]</p>
+                    </div>
+                </div>
+            </aside>
+        </main>
+    </div>
+    <script src="/static/js/vue.js"></script>
+    <script src="/static/js/axios.js"></script>
+    <script src="/static/js/main.js"></script>
+</body>
+</html>
