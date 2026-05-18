@@ -11,13 +11,13 @@ app = Flask(__name__)
 CORS(app)
 
 # ==================== KONFIGURASI ====================
-PERSON_MODEL_PATH = "person_beta.pt"      
-TRASHCAN_MODEL_PATH = "trashcan_beta.pt"  
+PERSON_MODEL_PATH = "person_fix.pt"      
+TRASHCAN_MODEL_PATH = "trashcan_fix.pt"
 
 SKIP_FRAMES = 3  
 INFERENCE_SIZE = 640  
-CONFIDENCE_PERSON = 0.60
-CONFIDENCE_TRASH = 0.20
+CONFIDENCE_PERSON = 0.80
+CONFIDENCE_TRASH = 0.60
 
 # ==================== GLOBAL STATE ====================
 camera_active = False
@@ -104,8 +104,8 @@ def generate_frames():
             
             if model_person and model_trash and frame_count % SKIP_FRAMES == 0:
                 try:
-                    results_person = model_person.predict(frame, imgsz=INFERENCE_SIZE, conf=CONFIDENCE_PERSON, classes=[0], device=0, verbose=False)
-                    results_trash = model_trash.predict(frame, imgsz=INFERENCE_SIZE, conf=CONFIDENCE_TRASH, device=0, verbose=False)
+                    results_person = model_person.predict(frame, imgsz=INFERENCE_SIZE, conf=CONFIDENCE_PERSON, classes=[0], device='cpu', verbose=False)
+                    results_trash = model_trash.predict(frame, imgsz=INFERENCE_SIZE, conf=CONFIDENCE_TRASH, device='cpu', verbose=False)
                     
                     last_boxes = []
                     person_count = 0
@@ -210,7 +210,7 @@ def validasi_rfid():
             SELECT COUNT(*) as total 
             FROM log_sampah 
             WHERE uid = %s 
-            AND MONTH(waktu) = MONTH(CURRENT_DATE()) 
+            AND SECOND(waktu) = SECOND(CURRENT_DATE()) 
             AND YEAR(waktu) = YEAR(CURRENT_DATE())
         ''', (uid,))
         log_data = cursor.fetchone()
@@ -221,7 +221,7 @@ def validasi_rfid():
         if log_data['total'] > 0:
             return jsonify({
                 "success": False, 
-                "message": f"Maaf {student['nama']}, kamu sudah piket bulan ini!"
+                "message": f"Maaf {student['nama']}, kamu sudah memilah bulan ini!"
             }), 403
         
         data = {
