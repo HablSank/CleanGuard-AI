@@ -17,6 +17,14 @@ class ManageSiswas extends ManageRecords
     {
         return [
             CreateAction::make(),
+
+            Actions\Action::make('export_excel')
+                ->label('Export Laporan')
+                ->icon('heroicon-o-document-arrow-down')
+                ->color('success')
+                ->action(function () {
+                    return Excel::download(new LaporanSiswa, 'Laporan_Partisipasi_CleanGuard.xlsx');
+                }),
         ];
     }
 }
