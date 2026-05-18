@@ -5,6 +5,7 @@ import threading
 import time
 import mysql.connector
 from ultralytics import YOLO
+import win32print
 
 app = Flask(__name__)
 CORS(app)
@@ -273,6 +274,58 @@ def reset_validation():
     with state_lock:
         validation_status = {"valid": False, "message": "Menunggu deteksi..."}
     return jsonify({"success": True})
+
+@app.route('/api/cetak-struk', methods=['POST'])
+def cetak_struk():
+    data = request.get_json()
+    siswa1 = data.get('siswa1', 'Siswa 1')
+    siswa2 = data.get('siswa2', 'Siswa 2')
+    waktu = time.strftime("%d-%m-%Y %H:%M:%S")
+
+    struk_text = f"""
+================================
+         CLEANGUARD AI
+     SMK NEGERI 1 SURABAYA
+================================
+Waktu : {waktu}
+
+BUKTI PEMILAHAN SAMPAH
+--------------------------------
+Siswa 1 : {siswa1}
+Siswa 2 : {siswa2}
+
+Status  : BERHASIL
+--------------------------------
+Terima kasih telah menjaga
+kebersihan lingkungan sekolah!
+================================
+\n\n\n\n\n
+"""
+
+    try:
+        printer_name = win32print.GetDefaultPrinter()
+        hPrinter = win32print.OpenPrinter(printer_name)
+        
+        try:
+            hJob = win32print.StartDocPrinter(hPrinter, 1, ("Struk CleanGuard", None, "RAW"))
+            try:
+                win32print.StartPagePrinter(hPrinter)
+                win32print.WritePrinter(hPrinter, struk_text.encode('utf-8'))
+                win32print.EndPagePrinter(hPrinter)
+            finally:
+                win32print.EndDocPrinter(hPrinter)
+        finally:
+            win32print.ClosePrinter(hPrinter)
+            
+        return jsonify({"success": True, "message": "Struk fisik berhasil dicetak!"})
+    
+    except Exception as e:
+        print("\n==== [SIMULASI PRINTER THERMAL] ====")
+        print(struk_text)
+        print("====================================")
+        print(f"[!] Warning: Printer tidak ditemukan ({e}). Struk dialihkan ke terminal.")
+        
+        return jsonify({"success": True, "message": "Struk dicetak di terminal!"})
 
 if __name__ == '__main__':
     print("[!] Sistem CleanGuard AI siap.")
