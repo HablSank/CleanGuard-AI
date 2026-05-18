@@ -211,7 +211,7 @@ def validasi_rfid():
             SELECT COUNT(*) as total 
             FROM log_sampah 
             WHERE uid = %s 
-            AND SECOND(waktu) = SECOND(CURRENT_DATE()) 
+            AND MONTH(waktu) = MONTH(CURRENT_DATE()) 
             AND YEAR(waktu) = YEAR(CURRENT_DATE())
         ''', (uid,))
         log_data = cursor.fetchone()
