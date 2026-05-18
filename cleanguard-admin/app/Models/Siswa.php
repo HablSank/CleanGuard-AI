@@ -12,4 +12,9 @@ class Siswa extends Model
     protected $keyType = 'string';
     public $timestamps = false;
     protected $guarded = [];
+
+    public function logSampah()
+    {
+        return $this->hasMany(LogSampah::class, 'uid', 'uid');
+    }
 }

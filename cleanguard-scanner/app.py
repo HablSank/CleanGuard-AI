@@ -17,7 +17,7 @@ TRASHCAN_MODEL_PATH = "trashcan_fix.pt"
 SKIP_FRAMES = 3  
 INFERENCE_SIZE = 640  
 CONFIDENCE_PERSON = 0.80
-CONFIDENCE_TRASH = 0.20
+CONFIDENCE_TRASH = 0.55
 
 # ==================== GLOBAL STATE ====================
 camera_active = False
@@ -77,7 +77,7 @@ def draw_cyberpunk_box(frame, x1, y1, x2, y2, label, box_class):
 def generate_frames():
     global camera_active, detection_state, validation_status
     
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
     if not cap.isOpened():
         return
     
@@ -124,7 +124,8 @@ def generate_frames():
                     if results_trash and len(results_trash) > 0:
                         for box in results_trash[0].boxes:
                             x1, y1, x2, y2 = map(int, box.xyxy[0])
-                            if (x2 - x1) * (y2 - y1) >= MIN_TRASH_AREA:
+                            luas_area = (x2 - x1) * (y2 - y1)
+                            if luas_area >= MIN_TRASH_AREA and luas_area <= 150000 and y1 > 50:
                                 trash_detected = True
                                 last_boxes.append({"coords": (x1, y1, x2, y2), "label": f"TRASHCAN {float(box.conf[0]):.0%}", "class": "trashcan"})
                     
@@ -282,25 +283,34 @@ def cetak_struk():
     siswa2 = data.get('siswa2', 'Siswa 2')
     waktu = time.strftime("%d-%m-%Y %H:%M:%S")
 
-    struk_text = f"""
-================================
-         CLEANGUARD AI
-     SMK NEGERI 1 SURABAYA
-================================
-Waktu : {waktu}
-
-BUKTI PEMILAHAN SAMPAH
---------------------------------
-Siswa 1 : {siswa1}
-Siswa 2 : {siswa2}
-
-Status  : BERHASIL
---------------------------------
-Terima kasih telah menjaga
-kebersihan lingkungan sekolah!
-================================
-\n\n\n\n\n
-"""
+    ESC_INIT = b'\x1B\x40'          
+    ESC_CENTER = b'\x1B\x61\x01'  
+    ESC_LEFT = b'\x1B\x61\x00'     
+    GS_CUT = b'\x1D\x56\x41\x10'
+    
+    struk = ESC_INIT
+    struk += ESC_CENTER
+    struk += b"================================\n"
+    struk += b"CLEANGUARD AI\n"
+    struk += b"SMK NEGERI 1 SURABAYA\n"
+    struk += b"================================\n\n"
+    
+    struk += ESC_CENTER
+    struk += f"Waktu : {waktu}\n\n".encode('utf-8')
+    struk += b"BUKTI PEMILAHAN SAMPAH\n"
+    struk += b"--------------------------------\n"
+    struk += f"Siswa 1 : {siswa1}\n".encode('utf-8')
+    struk += f"Siswa 2 : {siswa2}\n".encode('utf-8')
+    struk += b"\nStatus  : BERHASIL\n"
+    struk += b"--------------------------------\n\n"
+    
+    struk += ESC_CENTER
+    struk += b"Terima kasih telah menjaga\n"
+    struk += b"kebersihan lingkungan sekolah!\n"
+    struk += b"================================\n"
+    
+    struk += b"\n\n\n\n\n" 
+    struk += GS_CUT
 
     try:
         printer_name = win32print.GetDefaultPrinter()
@@ -310,22 +320,18 @@ kebersihan lingkungan sekolah!
             hJob = win32print.StartDocPrinter(hPrinter, 1, ("Struk CleanGuard", None, "RAW"))
             try:
                 win32print.StartPagePrinter(hPrinter)
-                win32print.WritePrinter(hPrinter, struk_text.encode('utf-8'))
+                win32print.WritePrinter(hPrinter, struk)
                 win32print.EndPagePrinter(hPrinter)
             finally:
                 win32print.EndDocPrinter(hPrinter)
         finally:
             win32print.ClosePrinter(hPrinter)
             
-        return jsonify({"success": True, "message": "Struk fisik berhasil dicetak!"})
+        return jsonify({"success": True, "message": "Struk fisik berhasil dicetak & dipotong!"})
     
     except Exception as e:
-        print("\n==== [SIMULASI PRINTER THERMAL] ====")
-        print(struk_text)
-        print("====================================")
-        print(f"[!] Warning: Printer tidak ditemukan ({e}). Struk dialihkan ke terminal.")
-        
-        return jsonify({"success": True, "message": "Struk dicetak di terminal!"})
+        print(f"[!] Warning: Printer gagal ({e}).")
+        return jsonify({"success": True, "message": "Simulasi struk di terminal."})
 
 if __name__ == '__main__':
     print("[!] Sistem CleanGuard AI siap.")

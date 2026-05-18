@@ -18,26 +18,44 @@ class LaporanSiswa implements FromCollection, WithHeadings, WithStyles
 
     public function collection()
     {
-        $data = Siswa::select('uid', 'nama', 'kelas', 'nis', 'total_buang')->get();
+        $data = Siswa::select('uid', 'nama', 'kelas', 'nis')
+            ->withCount(['logSampah' => function ($query) {
+                $query->whereMonth('waktu', now()->month)
+                      ->whereYear('waktu', now()->year);
+            }])
+            ->get();
+
         $this->totalBaris = $data->count() + 1; 
         
         $currentRow = 2; 
+        $formattedData = collect();
+
         foreach ($data as $siswa) {
-            if ($siswa->total_buang == 0 || is_null($siswa->total_buang)) {
-                $siswa->total_buang = "0";
+            $jumlahMilahBulanIni = $siswa->log_sampah_count;
+
+            if ($jumlahMilahBulanIni == 0) {
                 $this->barisMerah[] = $currentRow;
             } else {
                 $this->barisHijau[] = $currentRow;
             }
+
+            $formattedData->push([
+                'uid' => $siswa->uid,
+                'nama' => $siswa->nama,
+                'kelas' => $siswa->kelas,
+                'nis' => $siswa->nis,
+                'total_memilah' => $jumlahMilahBulanIni
+            ]);
+
             $currentRow++;
         }
         
-        return $data;
+        return $formattedData;
     }
 
     public function headings(): array
     {
-        return ['UID RFID', 'Nama Lengkap', 'Kelas', 'NIS', 'Total Memilah'];
+        return ['UID RFID', 'Nama Lengkap', 'Kelas', 'NIS', 'Total Memilah (Bulan Ini)'];
     }
 
     public function styles(Worksheet $sheet)
