@@ -17,7 +17,7 @@ TRASHCAN_MODEL_PATH = "trashcan_fix.pt"
 SKIP_FRAMES = 3  
 INFERENCE_SIZE = 640  
 CONFIDENCE_PERSON = 0.80
-CONFIDENCE_TRASH = 0.60
+CONFIDENCE_TRASH = 0.20
 
 # ==================== GLOBAL STATE ====================
 camera_active = False
