@@ -4,24 +4,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CleanGuard AI // Dual-User Validation</title>
+    <title>CleanGuard AI // Validasi Dua Pengguna</title>
     <script src="/static/js/tailwindcss.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        'cyber-black': '#0a0a0a',
-                        'cyber-dark': '#0d0d0d',
-                        'neon-green': '#22c55e',
-                        'neon-cyan': '#06b6d4',
+                        'cyber-black': '#0f172a',
+                        'cyber-dark': '#1c1917',  
+                        'neon-green': '#14b8a6',  
+                        'neon-cyan': '#0ea5e9',   
                         'neon-red': '#ef4444',
-                        'neon-yellow': '#eab308',
+                        'neon-yellow': '#f59e0b', 
                     },
                     fontFamily: {
-                        'orbitron': ['Orbitron', 'monospace'],
-                        'rajdhani': ['Rajdhani', 'sans-serif'],
+                        'orbitron': ['Poppins', 'sans-serif'], 
+                        'rajdhani': ['Inter', 'sans-serif'],
                     },
                 }
             }
@@ -29,97 +29,393 @@
     </script>
     <style>
         * { box-sizing: border-box; }
-        body { font-family: 'Rajdhani', sans-serif; background: #0a0a0a; color: #e5e5e5; overflow: hidden; }
-        .cyber-grid { position: fixed; inset: 0; background-image: linear-gradient(rgba(34, 197, 94, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(34, 197, 94, 0.03) 1px, transparent 1px); background-size: 50px 50px; pointer-events: none; z-index: 0; }
-        .hud-panel { background: linear-gradient(135deg, rgba(13, 13, 13, 0.95), rgba(26, 26, 26, 0.9)); border: 1px solid rgba(34, 197, 94, 0.3); position: relative; }
-        .student-slot.empty { border: 2px dashed rgba(34, 197, 94, 0.3); background: rgba(34, 197, 94, 0.02); }
-        .student-slot.filled { border: 2px solid #22c55e; background: rgba(34, 197, 94, 0.1); box-shadow: 0 0 20px #22c55e40; }
-        .student-slot.waiting { border: 2px solid #eab308; background: rgba(234, 179, 8, 0.1); animation: pulse 1s infinite; }
-        .camera-container { position: relative; background: #000; border: 3px solid #22c55e; box-shadow: 0 0 30px #22c55e40, inset 0 0 30px rgba(34, 197, 94, 0.1); }
-        .rfid-input { background: rgba(0,0,0,0.8); border: 2px solid #22c55e; color: #22c55e; font-family: 'Orbitron'; }
-        .rfid-input:focus { box-shadow: 0 0 20px #22c55e40; outline: none; }
-        .status-dot { width: 8px; height: 8px; border-radius: 50%; animation: pulse 1.5s infinite; }
-        .status-dot.online { background: #22c55e; box-shadow: 0 0 10px #22c55e; }
-        .status-dot.waiting { background: #eab308; box-shadow: 0 0 10px #eab308; }
-        .status-dot.offline { background: #6b7280; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-        .success-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 100; display: flex; align-items: center; justify-content: center; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0f172a;
+            color: #f8fafc;
+            overflow: hidden;
+        }
+        .bg-pattern {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle at 50% 0%, rgba(20, 184, 166, 0.05) 0%, transparent 70%);
+            z-index: 0;
+            pointer-events: none;
+        }
+        .hud-panel {
+            background: #1c1917;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        .student-slot { transition: all 0.3s ease; }
+        .student-slot.empty {
+            border: 2px dashed rgba(20, 184, 166, 0.3);
+            background: rgba(28, 25, 23, 0.5);
+        }
+        .student-slot.filled {
+            border: 2px solid #14b8a6;
+            background: rgba(20, 184, 166, 0.05);
+            box-shadow: 0 4px 20px rgba(20, 184, 166, 0.1);
+        }
+        .student-slot.waiting {
+            border: 2px solid #f59e0b;
+            background: rgba(245, 158, 11, 0.05);
+            animation: pulse-soft 2s infinite;
+        }
+        .camera-container {
+            position: relative;
+            background: #000;
+            border: 2px solid #334155;
+            border-radius: 1rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            overflow: hidden;
+            transition: border-color 0.3s ease;
+        }
+        .camera-container.active {
+            border-color: #14b8a6;
+            box-shadow: 0 0 30px rgba(20, 184, 166, 0.15);
+        }
+        .rfid-input {
+            background: #292524;
+            border: 2px solid #475569;
+            color: #14b8a6;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .rfid-input:focus {
+            border-color: #14b8a6;
+            box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.15);
+            outline: none;
+        }
+        .rfid-input::placeholder {
+            color: #64748b;
+            font-weight: 500;
+        }
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+        .status-dot.online {
+            background: #14b8a6;
+            box-shadow: 0 0 10px rgba(20, 184, 166, 0.5);
+        }
+        .status-dot.waiting {
+            background: #f59e0b;
+            box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+            animation: pulse-soft 1.5s infinite;
+        }
+        .status-dot.offline { background: #64748b; }
+        @keyframes pulse-soft {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+        .success-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(8px);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; backdrop-filter: blur(0px); }
+            to { opacity: 1; backdrop-filter: blur(8px); }
+        }
+        .success-box {
+            background: #1c1917;
+            border: 1px solid rgba(20, 184, 166, 0.3);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 40px rgba(20, 184, 166, 0.2);
+            transform: scale(0.95);
+            animation: popIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @keyframes popIn { to { transform: scale(1); } }
     </style>
 </head>
 
 <body class="h-screen w-full">
-    <div class="cyber-grid"></div>
+    <div class="bg-pattern"></div>
     <div id="app" class="relative z-10 h-full flex flex-col">
-        <header class="h-16 bg-cyber-dark border-b border-neon-green/30 flex items-center justify-between px-6">
-            <div class="flex items-center gap-4">
+        <header class="h-20 bg-cyber-dark border-b border-neon-green/20 flex items-center justify-between px-8 shadow-md">
+            <div class="flex items-center gap-5">
+                <div class="w-12 h-12 bg-neon-green/10 rounded-xl border border-neon-green/30 flex items-center justify-center">
+                    <svg class="w-7 h-7 text-neon-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                </div>
                 <div>
-                    <h1 class="font-orbitron text-xl font-bold text-neon-green">CLEANGUARD AI</h1>
-                    <p class="text-xs text-gray-500 font-rajdhani">DUAL-USER VALIDATION SYSTEM v2.0</p>
+                    <h1 class="font-orbitron text-2xl font-bold text-white tracking-wide">CleanGuard <span class="text-neon-green">AI</span></h1>
+                    <p class="text-sm text-gray-400 font-rajdhani font-medium mt-0.5">Sistem Validasi Dua Pengguna</p>
                 </div>
             </div>
-            <div class="flex items-center gap-6">
-                <div class="flex items-center gap-2"><div class="status-dot" :class="systemStatus"></div><span class="font-orbitron text-xs text-gray-400">[[' statusText ']]</span></div>
-                <div class="font-orbitron text-lg text-neon-green">[[' currentTime ']]</div>
+            <div class="flex items-center gap-8">
+                <div class="flex items-center gap-3 px-4 py-2 bg-black/20 rounded-full border border-white/5">
+                    <div class="status-dot" :class="systemStatus"></div>
+                    <span class="font-orbitron text-sm text-gray-300 font-medium">[[' statusText ']]</span>
+                </div>
+                <div class="text-right">
+                    <div class="font-orbitron text-xl text-white font-semibold">[[' currentTime ']]</div>
+                    <div class="text-sm text-neon-green font-medium">[[' currentDate ']]</div>
+                </div>
             </div>
         </header>
 
-        <main class="flex-1 flex gap-4 p-4 overflow-hidden">
-            <aside class="w-72 flex flex-col gap-4">
-                <div class="hud-panel rounded-lg p-4 flex-1 flex flex-col relative" :class="{'student-slot filled': student1, 'student-slot empty': !student1}">
-                    <div class="flex items-center justify-between mb-4">
-                        <span class="font-orbitron text-xs text-neon-green">SISWA 01</span>
+        <main class="flex-1 flex gap-5 p-5 overflow-hidden">
+            <aside class="w-80 flex flex-col gap-5">
+                <div class="hud-panel rounded-2xl p-6 flex-1 flex flex-col relative student-slot"
+                    :class="{'filled': student1, 'empty': !student1}">
+                    <div class="flex items-center justify-between mb-6">
+                        <span class="font-orbitron text-sm text-gray-400 font-semibold tracking-wider">SISWA 01</span>
                         <div class="flex items-center gap-2">
                             <div class="status-dot" :class="student1 ? 'online' : 'offline'"></div>
-                            <span class="text-xs" :class="student1 ? 'text-neon-green' : 'text-gray-600'">[[' student1 ? 'VERIFIED' : 'WAITING' ']]</span>
+                            <span class="text-xs font-semibold" :class="student1 ? 'text-neon-green' : 'text-gray-500'">
+                                [[' student1 ? 'TERVERIFIKASI' : 'MENUNGGU' ']]
+                            </span>
                         </div>
                     </div>
+                    
                     <div v-if="student1" class="flex-1 flex flex-col items-center justify-center">
-                        <h3 class="font-orbitron text-lg text-white mb-1">[[' student1.name ']]</h3>
-                        <span class="px-3 py-1 bg-neon-green/20 border border-neon-green/50 rounded text-xs text-neon-green mb-4">[[' student1.class ']]</span>
+                        <div class="w-32 h-32 rounded-full border-4 border-neon-green/30 overflow-hidden mb-5 shadow-lg relative p-1 bg-cyber-black">
+                            <img :src="student1.photo" :alt="student1.name" class="w-full h-full object-cover rounded-full">
+                        </div>
+                        <h3 class="font-orbitron text-xl text-white text-center font-bold mb-2">[[' student1.name ']]</h3>
+                        <span class="px-4 py-1.5 bg-neon-green/10 rounded-full text-sm font-orbitron text-neon-green font-semibold mb-6">[[' student1.class ']]</span>
+                        
+                        <div class="w-full space-y-3 text-sm mt-auto">
+                            <div class="flex justify-between items-center p-3 bg-black/20 rounded-xl border border-white/5">
+                                <span class="text-gray-400 font-medium">NIS</span>
+                                <span class="font-orbitron text-white font-semibold">[[' student1.nis ']]</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-black/20 rounded-xl border border-white/5">
+                                <span class="text-gray-400 font-medium">Waktu Scan</span>
+                                <span class="font-orbitron text-neon-green font-semibold">[[' student1ScanTime ']]</span>
+                            </div>
+                        </div>
                     </div>
-                    <div v-else class="flex-1 flex flex-col items-center justify-center opacity-30">
-                        <p class="font-orbitron text-xs text-center">MENUNGGU SCAN RFID</p>
+                    
+                    <div v-else class="flex-1 flex flex-col items-center justify-center opacity-40">
+                        <div class="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mb-5">
+                            <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                        </div>
+                        <p class="font-orbitron text-sm text-center text-gray-400 font-medium">MENUNGGU<br>KARTU RFID</p>
                     </div>
+                </div>
+
+                <div class="hud-panel rounded-2xl p-5 h-[160px] flex flex-col">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="p-1.5 bg-neon-green/10 rounded-lg">
+                            <svg class="w-5 h-5 text-neon-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                        <span class="font-orbitron text-sm text-white font-semibold">INSTRUKSI</span>
+                    </div>
+                    <p class="text-sm text-gray-400 leading-relaxed font-medium">[[' currentInstruction ']]</p>
                 </div>
             </aside>
 
-            <section class="flex-1 flex flex-col gap-4">
-                <div class="camera-container rounded-lg flex-1 relative overflow-hidden">
-                    <img v-if="showCamera" src="/video_feed" class="w-full h-full object-cover">
-                    <div v-else class="w-full h-full flex flex-col items-center justify-center bg-cyber-dark">
-                        <h3 class="font-orbitron text-xl text-neon-green mb-2">KAMERA STANDBY</h3>
+            <section class="flex-1 flex flex-col gap-5">
+                <div class="camera-container flex-1" :class="showCamera ? 'active' : ''">
+                    <img v-if="showCamera" src="/video_feed" alt="Live Camera" class="w-full h-full object-cover">
+                    <div v-else class="w-full h-full flex flex-col items-center justify-center bg-[#0f172a]">
+                        <div class="relative mb-8">
+                            <div class="w-24 h-24 bg-slate-800 rounded-full flex items-center justify-center border border-slate-700">
+                                <svg class="w-12 h-12 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                </svg>
+                            </div>
+                        </div>
+                        <h3 class="font-orbitron text-2xl text-white font-semibold mb-3">Kamera Standby</h3>
+                        <p class="text-gray-400 font-medium">Menunggu autentikasi kedua siswa untuk mengaktifkan AI.</p>
+                    </div>
+                    
+                    <div v-if="showCamera" class="absolute inset-0 pointer-events-none z-10 p-5 flex flex-col justify-end">
+                        <div class="flex justify-end items-end">
+                            <div class="bg-cyber-black/80 backdrop-blur-md px-4 py-2.5 rounded-xl border shadow-lg"
+                                :class="validationComplete ? 'border-neon-green/50' : 'border-neon-yellow/50'">
+                                <span class="font-orbitron text-sm font-semibold tracking-wide"
+                                    :class="validationComplete ? 'text-neon-green' : 'text-neon-yellow'">
+                                    [[' validationComplete ? '✓ Tuntas' : 'Memeriksa...' ']]
+                                </span>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="hud-panel rounded-lg p-4">
-                    <div class="flex items-center gap-4">
-                        <input type="text" v-model="rfidInput" @keydown.enter="handleScan" v-autofocus class="rfid-input w-full px-4 py-3 rounded text-center text-lg" :placeholder="inputPlaceholder" :disabled="loading || validationComplete">
+
+                <div class="hud-panel rounded-2xl p-4">
+                    <div v-if="!validationComplete" class="flex items-center gap-4">
+                        <div class="flex-1 relative">
+                            <input type="text" v-model="rfidInput" @keydown.enter="handleScan" v-autofocus
+                                class="rfid-input w-full px-5 py-3 rounded-xl text-center text-lg tracking-widest shadow-inner"
+                                :placeholder="inputPlaceholder" :disabled="loading">
+                            <div v-if="loading" class="absolute right-5 top-1/2 -translate-y-1/2">
+                                <div class="w-6 h-6 border-3 border-neon-green/30 border-t-neon-green rounded-full animate-spin"></div>
+                            </div>
+                        </div>
+                        <div class="px-5 py-3 rounded-xl border font-orbitron font-bold text-lg" :class="statusBadgeClass">
+                            [[' scanStep ']] / 2
+                        </div>
                     </div>
-                    <div v-if="message" class="mt-3 text-center text-neon-green">[[' message ']]</div>
+
+                    <button v-else @click="resetSession"
+                        class="w-full py-3 bg-neon-red/10 border border-neon-red/50 rounded-xl font-orbitron text-neon-red font-bold hover:bg-neon-red hover:text-white transition-all shadow-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        RESET SESI SEKARANG
+                    </button>
+                    
+                    <div v-if="message && !validationComplete" class="mt-3 p-3 rounded-xl text-center font-medium text-sm transition-all shadow-sm"
+                        :class="{'bg-neon-green/10 text-neon-green border border-neon-green/30': success, 'bg-neon-red/10 text-neon-red border border-neon-red/30': !success}">
+                        [[' message ']]
+                    </div>
                 </div>
             </section>
 
-            <aside class="w-72 flex flex-col gap-4">
-                <div class="hud-panel rounded-lg p-4 flex-1 flex flex-col relative" :class="{'student-slot filled': student2, 'student-slot empty': !student2 && !student1, 'student-slot waiting': student1 && !student2}">
-                    <div class="flex items-center justify-between mb-4">
-                        <span class="font-orbitron text-xs text-neon-green">SISWA 02</span>
+            <aside class="w-80 flex flex-col gap-5">
+                <div class="hud-panel rounded-2xl p-6 flex-1 flex flex-col relative student-slot"
+                    :class="{'filled': student2, 'empty': !student2 && !student1, 'waiting': student1 && !student2}">
+                    <div class="flex items-center justify-between mb-6">
+                        <span class="font-orbitron text-sm text-gray-400 font-semibold tracking-wider">SISWA 02</span>
                         <div class="flex items-center gap-2">
                             <div class="status-dot" :class="student2 ? 'online' : (student1 ? 'waiting' : 'offline')"></div>
-                            <span class="text-xs" :class="student2 ? 'text-neon-green' : (student1 ? 'text-neon-yellow' : 'text-gray-600')">[[' student2 ? 'VERIFIED' : (student1 ? 'YOUR TURN' : 'WAITING') ']]</span>
+                            <span class="text-xs font-semibold" :class="student2 ? 'text-neon-green' : (student1 ? 'text-neon-yellow' : 'text-gray-500')">
+                                [[' student2 ? 'TERVERIFIKASI' : (student1 ? 'GILIRANMU' : 'MENUNGGU') ']]
+                            </span>
                         </div>
                     </div>
+                    
                     <div v-if="student2" class="flex-1 flex flex-col items-center justify-center">
-                        <h3 class="font-orbitron text-lg text-white mb-1">[[' student2.name ']]</h3>
-                        <span class="px-3 py-1 bg-neon-green/20 border border-neon-green/50 rounded text-xs text-neon-green mb-4">[[' student2.class ']]</span>
+                        <div class="w-32 h-32 rounded-full border-4 border-neon-green/30 overflow-hidden mb-5 shadow-lg relative p-1 bg-cyber-black">
+                            <img :src="student2.photo" :alt="student2.name" class="w-full h-full object-cover rounded-full">
+                        </div>
+                        <h3 class="font-orbitron text-xl text-white text-center font-bold mb-2">[[' student2.name ']]</h3>
+                        <span class="px-4 py-1.5 bg-neon-green/10 rounded-full text-sm font-orbitron text-neon-green font-semibold mb-6">[[' student2.class ']]</span>
+                        
+                        <div class="w-full space-y-3 text-sm mt-auto">
+                            <div class="flex justify-between items-center p-3 bg-black/20 rounded-xl border border-white/5">
+                                <span class="text-gray-400 font-medium">NIS</span>
+                                <span class="font-orbitron text-white font-semibold">[[' student2.nis ']]</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-black/20 rounded-xl border border-white/5">
+                                <span class="text-gray-400 font-medium">Waktu Scan</span>
+                                <span class="font-orbitron text-neon-green font-semibold">[[' student2ScanTime ']]</span>
+                            </div>
+                        </div>
                     </div>
-                    <div v-else class="flex-1 flex flex-col items-center justify-center opacity-30">
-                        <p class="font-orbitron text-xs text-center" :class="student1 ? 'text-neon-yellow' : 'text-neon-green'">[[' student1 ? 'SCAN PARTNER' : 'MENUNGGU' ']]</p>
+                    
+                    <div v-else class="flex-1 flex flex-col items-center justify-center" :class="student1 ? 'opacity-80' : 'opacity-40'">
+                        <div class="w-20 h-20 rounded-full flex items-center justify-center mb-5 transition-colors"
+                             :class="student1 ? 'bg-neon-yellow/10 border border-neon-yellow/30' : 'bg-slate-800'">
+                            <svg class="w-10 h-10" :class="student1 ? 'text-neon-yellow' : 'text-gray-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                        </div>
+                        <p class="font-orbitron text-sm text-center font-medium" :class="student1 ? 'text-neon-yellow' : 'text-gray-400'">
+                            [[' student1 ? 'SILAKAN SCAN KARTU' : 'MENUNGGU' ']]
+                        </p>
+                    </div>
+                </div>
+
+                <div class="hud-panel rounded-2xl p-5 h-[160px] flex flex-col">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="p-1.5 bg-neon-cyan/10 rounded-lg">
+                            <svg class="w-5 h-5 text-neon-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                            </svg>
+                        </div>
+                        <span class="font-orbitron text-sm text-white font-semibold">STATISTIK SESI</span>
+                    </div>
+                    <div class="space-y-3 text-sm">
+                        <div class="flex justify-between items-center border-b border-white/5 pb-2">
+                            <span class="text-gray-400 font-medium">ID Sesi</span>
+                            <span class="font-orbitron text-neon-cyan font-semibold">[[' sessionId ']]</span>
+                        </div>
+                        <div class="flex justify-between items-center pt-1">
+                            <span class="text-gray-400 font-medium">Status</span>
+                            <span class="font-orbitron font-bold" :class="validationComplete ? 'text-neon-green' : 'text-neon-yellow'">
+                                [[' validationComplete ? 'BERJALAN' : 'MENUNGGU' ']]
+                            </span>
+                        </div>
                     </div>
                 </div>
             </aside>
         </main>
+
+        <footer class="h-14 bg-cyber-dark border-t border-neon-green/20 flex items-center justify-between px-8 text-xs font-medium">
+            <div class="flex items-center gap-6">
+                <div class="flex items-center gap-2">
+                    <span class="text-gray-500">KAMERA:</span>
+                    <span :class="showCamera ? 'text-neon-green' : 'text-neon-yellow'" class="font-orbitron font-semibold flex items-center gap-1">
+                        <span class="w-1.5 h-1.5 rounded-full" :class="showCamera ? 'bg-neon-green' : 'bg-neon-yellow'"></span> 
+                        [[' showCamera ? 'AKTIF' : 'MENUNGGU' ']]
+                    </span>
+                </div>
+
+                <div class="flex items-center gap-2 border-l border-white/10 pl-6">
+                    <span class="text-gray-500 tracking-wider">WAKTU:</span>
+                    <span class="text-yellow-600 font-orbitron font-bold flex items-center gap-1">
+                        [[' sessionDuration ']]
+                    </span>
+                </div>
+                
+                <div class="flex items-center gap-2">
+                    <span class="text-gray-500">MODEL AI:</span>
+                    <span class="text-neon-cyan font-orbitron font-semibold flex items-center gap-1">
+                        YOLOV8
+                    </span>
+                </div>
+            </div>
+            <div class="text-gray-500 font-medium">© 2026 CleanGuard AI</div>
+        </footer>
+
+        <div v-if="showSuccessModal" class="success-modal">
+            <div class="success-box rounded-3xl p-10 text-center max-w-lg w-full">
+                <div class="w-24 h-24 mx-auto mb-6 rounded-full bg-neon-green/10 border-4 border-neon-green flex items-center justify-center shadow-[0_0_30px_rgba(20,184,166,0.3)]">
+                    <svg class="w-12 h-12 text-neon-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                    </svg>
+                </div>
+
+                <h2 class="font-orbitron text-2xl text-white mb-2 font-bold tracking-wide">AUTENTIKASI SUKSES</h2>
+                <p class="text-neon-green font-medium mb-6">Poin Pemilahan Berhasil Ditambahkan</p>
+
+                <div class="flex justify-center gap-4 mb-8">
+                    <div class="px-5 py-2.5 bg-black/30 border border-white/10 rounded-xl flex-1">
+                        <p class="text-xs text-gray-500 mb-1">Siswa 01</p>
+                        <p class="font-orbitron text-white font-semibold text-sm truncate">[[' student1?.name || '-' ']]</p>
+                    </div>
+                    <div class="px-5 py-2.5 bg-black/30 border border-white/10 rounded-xl flex-1">
+                        <p class="text-xs text-gray-500 mb-1">Siswa 02</p>
+                        <p class="font-orbitron text-white font-semibold text-sm truncate">[[' student2?.name || '-' ']]</p>
+                    </div>
+                </div>
+
+                <div class="bg-black/20 rounded-lg py-3 inline-block px-6">
+                    <p class="text-sm text-gray-400 flex items-center gap-2">
+                        <svg class="w-4 h-4 animate-spin text-neon-green" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Sistem mereset otomatis dalam 5 detik...
+                    </p>
+                </div>
+            </div>
+        </div>
     </div>
+
     <script src="/static/js/vue.js"></script>
     <script src="/static/js/axios.js"></script>
     <script src="/static/js/main.js"></script>
 </body>
+
 </html>

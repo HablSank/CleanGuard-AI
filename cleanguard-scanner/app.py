@@ -11,8 +11,8 @@ app = Flask(__name__)
 CORS(app)
 
 # ==================== KONFIGURASI ====================
-PERSON_MODEL_PATH = "person.pt"      
-TRASHCAN_MODEL_PATH = "trashcan.pt"  
+PERSON_MODEL_PATH = "person_beta.pt"      
+TRASHCAN_MODEL_PATH = "trashcan_beta.pt"  
 
 SKIP_FRAMES = 3  
 INFERENCE_SIZE = 640  
@@ -168,9 +168,9 @@ def generate_frames():
                 frame = draw_cyberpunk_box(frame, *b["coords"], b["label"], b["class"])
             
             teks_orang = f"ORANG TERDETEKSI: {detection_state['person_count']}"
-            cv2.rectangle(frame, (40, 650), (380, 700), (42, 23, 15), -1) 
-            cv2.rectangle(frame, (40, 650), (380, 700), (233, 165, 14), 2)
-            cv2.putText(frame, teks_orang, (55, 685), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (233, 165, 14), 2, cv2.LINE_AA)
+            cv2.rectangle(frame, (60, 650), (380, 700), (42, 23, 15), -1) 
+            cv2.rectangle(frame, (60, 650), (380, 700), (233, 165, 14), 2)
+            cv2.putText(frame, teks_orang, (80, 680), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (233, 165, 14), 2, cv2.LINE_AA)
             
             ret, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 85])
             if ret:
