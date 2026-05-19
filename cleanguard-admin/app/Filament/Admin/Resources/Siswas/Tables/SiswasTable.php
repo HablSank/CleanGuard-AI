@@ -22,8 +22,8 @@ class SiswasTable
                 TextColumn::make('kelas')
                     ->searchable(),
                 TextColumn::make('nis')
-                    ->numeric()
-                    ->sortable(),
+                    ->sortable()
+                    ->searchable(),
                 TextColumn::make('total_buang')
                     ->numeric()
                     ->sortable(),
